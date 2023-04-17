@@ -1,0 +1,351 @@
+[*****************************************************************************
+ IMPORTANT NOTICE
+
+ By downloading, installing, or otherwise using any tek-apps, software, documentation, or 
+ other materials made available by TekChoice, LLC, through this repository, you acknowledge
+ that you have read, understand, and agree to be bound by the End User License Agreement (the "EULA")
+ included in these downloaded files as EULA.txt and made available at www.tekchoice.com/EULA.
+
+ SPECFILENAME: TEKAPP011.CREDITINCREASE
+ VERSION: 001
+ COPYRIGHT: TekChoice, LLC 2020 � 
+
+ Description:   Streamlined Credit Card limit increase process. 
+
+ Files:         1. PowerOn Specfiles
+                  a. TEKAPP011.CREDITINCREASE
+                  b. TEKAPP011.CREDITINCREASE.DEF
+                  c. TEKAPP011.CREDITINCREASE.SET
+                  d. TEKAPP011.CREDITINCREASE.PRO
+                  e. TEKAPP011.CREDITINCREASE.CU
+                  f. TEKAPP011.CREDITINCREASE.HTM
+                  g. TEKAPP011.MAIN.DEF
+                  h. TEKAPP011.MAIN.PRO
+
+
+ Programmed:    TekChoice LLC
+
+ Modified:      06.24.20 Original Source
+
+********************************************************************************]
+
+SUBROUTINE DEMAND WINDOWS
+STATELESS
+TARGET=ACCOUNT
+
+DEFINE
+ #INCLUDE "RD.GETDATA.DEF"
+ #INCLUDE "TEKAPP011.CREDITINCREASE.DEF"
+ #INCLUDE "TEKAPP011.MAIN.DEF"
+END[DEFINE]
+
+SETUP
+ #INCLUDE "TEKAPP011.CREDITINCREASE.SET"
+ CALL TekSetGlobalVariables
+ CALL setCrediUnionVars
+ TekWebCalendar=FALSE
+
+ StepName(1)="Select Credit Card"
+ StepName(2)="Credit Card Details"
+ StepName(3)="Approved"
+ StepName(4)="Confirmation"
+ NumOfSteps=4
+ CurrentApp(CurrentAppChannel,1)="01 Episys Client"
+ CALL TekProWebSetupApp
+ CurrentApp(CurrentAppStep,1)="Initial App Call"
+ HtmlVars(HtmlAccountNumber,HtmlFieldValue)=ACCOUNT:NUMBER
+
+ WebPageTitle = "Credit Card Limit Increase"
+ RGSTATUS="selectLoan"
+ HasPDFForms=TRUE
+ CALL readELAJson
+ CALL validateAccess
+
+ IF validateSGFlag=TRUE THEN CALL validateSG
+
+ WHILE RGSTATUS <> "CANCEL"
+  DO
+    WHILELIMIT=100000000
+
+    IF RGSTATUS="selectLoan" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL selectLoan
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="getDataDetails"
+     END
+
+    IF RGSTATUS="getDataDetails" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL getDataDetails
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="selectLoan"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT THEN
+         IF HtmlVars(HtmlResquestStatus,HtmlFieldValue)="Approved" THEN 
+           RGSTATUS="setApproved"
+         ELSE IF HtmlVars(HtmlResquestStatus,HtmlFieldValue)="Denied" THEN
+           RGSTATUS="setDenied"
+         ELSE IF HtmlVars(HtmlResquestStatus,HtmlFieldValue)="viewReport" THEN
+           CALL viewReport
+         ELSE IF HtmlVars(HtmlResquestStatus,HtmlFieldValue)="getCreditReport" THEN
+           CALL getCreditReport
+         ELSE IF HtmlVars(HtmlResquestStatus,HtmlFieldValue)="CollectionSummary" THEN
+           CALL viewCollectionSummary
+     END
+
+    IF RGSTATUS="setApproved" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       StepName(3)="Approved"
+       CALL setApproved
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="getDataDetails"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="setApproved"
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="ProcessApproval"
+    END
+
+    IF RGSTATUS="setDenied" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       StepName(3)="Denied"
+       CALL TekProProcessDenied
+       CALL TekProAddTranLog
+       CALL getDeniedPDF
+       CALL DisplayConfirmation
+       RGSTATUS="Complete"
+    END
+
+    IF RGSTATUS="ProcessApproval" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL TekProProcessApproval
+       CALL TekProAddTranLog
+       CALL getApprovalPDF
+       CALL DisplayConfirmation
+       RGSTATUS="Complete"
+     END
+
+    IF RGSTATUS="Complete" THEN
+     DO
+       RGSTATUS="CANCEL"
+     END
+  END[WHILE]
+END[SETUP]
+
+
+PRINT TITLE=WebPageTitle
+ SUPPRESSNEWLINE
+END[PRINT]
+
+PROCEDURE selectLoan
+ CurrentStep=1
+ CALL TekProWebHeader
+ CALL APPJS
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<input type='hidden' name='HtmlLoanID' id='HtmlLoanID' value='' >")
+ HTMLVIEWLINE("<div style='padding:20px 40px' >")
+ HTMLVIEWLINE("<b>" +HtmlVars(HtmlLoanID,HtmlFieldLabel)+ "</b>")
+ HTMLVIEWLINE("<br/><br/>")
+ CALL getCreditCardSel
+ HTMLVIEWLINE("</div>") 
+ WebBtn(1)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[selectLoan]
+
+PROCEDURE getDataDetails 
+ CurrentStep=2
+ CALL TekProWebHeader
+ CALL APPJS
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<input type='hidden' name='HtmlResquestStatus' id='HtmlResquestStatus' value='' >")
+ CALL getDataOverview
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+ HTMLVIEWLINE("<tr><td valign='top' style='padding:10px' >")
+ HtmlTxtFieldName=RequesterLocator
+ IF RequesterObj(ObjNameLocator)="" THEN RequesterObj(ObjNameLocator)=FORMAT("9999999999",NAME:LOCATOR)
+ CALL TekProCreateSelField
+ CALL getAccountNames
+ HTMLVIEWLINE("</select><br/><br/>") 
+ HtmlTxtFieldName=HtmlNewAnnualIncome
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlGrossMonthlyPay
+ HtmlFieldDisabled=TRUE
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlOriginalCreditScore
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlRecentCreditScore
+ CALL TekProCreateLabelField
+ CALL getLoanSelectedBtns
+ HTMLVIEWLINE("</td><td valign='top' style='padding:10px; width:35%' >")
+ HtmlTxtFieldName=HtmlCurrentCreditLimit
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLADate
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLACreditScore
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLAIncome
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLADebtRatio1
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLADebtRatio2
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLADebtRatio3
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlLAProposedUER
+ CALL TekProCreateLabelField
+
+ HTMLVIEWLINE("</td></tr>")
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+ IF WebSubmitBtn=NEXT AND (HtmlVars(HtmlResquestStatus,HtmlFieldValue)="Approved" OR HtmlVars(HtmlResquestStatus,HtmlFieldValue)="Denied") THEN
+  DO
+   HtmlTxtFieldName=HtmlNewAnnualIncome
+   CALL TekProValRequiredField
+   TEMPMONEY=MONEY(VALUE(HtmlVars(HtmlNewAnnualIncome,HtmlFieldValue)))/12
+   CALL TekProFormatMoney
+   HtmlVars(HtmlGrossMonthlyPay,HtmlFieldValue)=TEMPTEXT
+   [ *** GET SELECTED NAME ****]
+   CALL TekSetNameToRequester
+   CALL TekSetNameHtmlVars
+  END
+ 
+END[getDataDetails]
+
+PROCEDURE setApproved
+ CurrentStep=3
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+ HTMLVIEWLINE("<tr><td valign='top' style='padding:10px' >")
+ HtmlTxtFieldName=HtmlNewLimit
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("<b>Account Note(s):</b><br/><br/>")
+ HtmlTxtFieldName=HtmlAccountNoteTxt1
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlAccountNoteTxt2
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlAccountNoteTxt3
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlAccountNoteTxt4
+ CALL TekProCreateTxtField
+ HtmlTxtFieldName=HtmlAccountNoteTxt5
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td><td valign='top' style='padding:10px; width:35%' >")
+ HtmlTxtFieldName=HtmlLoanSelected
+ CALL TekProCreateLabelField
+ HtmlTxtFieldName=HtmlCurrentCreditLimit
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("</td></tr>")
+ HTMLVIEWLINE("</table>")
+
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ WebBtn(3)="NEXT~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields 
+ IF WebSubmitBtn=NEXT THEN 
+  DO
+    IF MONEY(VALUE(HtmlVars(HtmlNewLimit,HtmlFieldValue)))<=$0.00 THEN
+     DO
+       POPUPMESSAGE(0,HtmlVars(HtmlNewLimit,HtmlFieldLabel)+" is required")
+       WebSubmitBtn=REFRESHFORM 
+     END
+  END 
+
+END[setApproved]
+
+PROCEDURE viewReport
+ INITSUBROUTINE(ERRORTEXT)
+ EXECUTE("RD.XPNV7",ERRORTEXT)
+END[viewReport]
+
+PROCEDURE viewCollectionSummary
+ INITSUBROUTINE(ERRORTEXT)
+ EXECUTE("COLLECTION.SUMMARY",ERRORTEXT)
+END[viewCollectionSummary]
+
+PROCEDURE getCreditReport
+ HtmlVars(HtmlCreditReportPullTxt,HtmlFieldValue)=CreditReportPullTxtYes
+
+ FOR EACH NAME WITH (NAME:TYPE=0 AND
+                       NAME:DEATHDATE='--/--/--' AND
+                       NAME:EFFECTIVEDATE<=SYSTEMDATE AND
+                      (NAME:EXPIRATIONDATE>SYSTEMDATE OR
+                       NAME:EXPIRATIONDATE='--/--/--'))
+  DO
+  END
+
+ [20210720 KDS BEGIN ADD]
+ INITCREDITREPORT(2) [0=ALL DATA FILLED, 2=EXISTING NAME]
+ @CREDITREPORTBUREAU=1 [EXPERIAN]
+ @CREDITREPORTINQUIRYTYPE=0 [EXPERIAN REPORT]
+ @CREDITREPORTECOAINQTYPE="I"
+
+ PULLCREDITREPORT
+ NEWPAGE
+ IF @CREDITREPORTERROR="" THEN
+  DO
+    BRIGHT
+    BLINK
+    PRINT "Error - " + @CREDITREPORTERROR
+    STOPBLINK
+    BELL
+    NEWLINE
+  END
+ ELSE
+  DO
+   INITSUBROUTINE(ERRORTEXT)
+   EXECUTE("RD.XPNV7",ERRORTEXT)
+  END
+ [20210720 KDS END ADD]
+END[getCreditReport]
+
+PROCEDURE getDeniedPDF
+ CALL TekProCreateTempFile
+ INITSUBROUTINE(ERRORTEXT)
+ @ENVARGCHAR1=TekTempFileName
+ IF HasPDFForms=TRUE THEN EXECUTE(DeniedPDFForm,ERRORTEXT)
+END[getDeniedPDF]
+
+PROCEDURE getApprovalPDF
+ CALL TekProCreateTempFile
+ INITSUBROUTINE(ERRORTEXT)
+ @ENVARGCHAR1=TekTempFileName
+ IF HasPDFForms=TRUE THEN EXECUTE(ApprovalPDFForm,ERRORTEXT)
+END[getApprovalPDF]
+
+PROCEDURE DisplayConfirmation
+ CurrentStep=4
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ CALL TekProPrintConfirmation
+ WebBtn(1)="END~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[DisplayConfirmation]
+
+#INCLUDE "TEKAPP011.CREDITINCREASE.PRO"
+#INCLUDE "TEKAPP011.CREDITINCREASE.CU"
+#INCLUDE "TEKAPP011.CREDITINCREASE.HTM"
+#INCLUDE "TEKAPP011.MAIN.PRO"
+
+
+
+
