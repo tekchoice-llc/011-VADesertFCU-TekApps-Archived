@@ -1,0 +1,274 @@
+[*****************************************************************************
+
+ IMPORTANT NOTICE
+
+ By downloading, installing, or otherwise using any tek-apps, software, documentation, or 
+ other materials made available by TekChoice, LLC, through this repository, you acknowledge
+ that you have read, understand, and agree to be bound by the End User License Agreement (the "EULA")
+ included in these downloaded files as EULA.txt and made available at www.tekchoice.com/EULA.
+
+ SPECFILENAME: TEKAPP011.CREDITINCREASE.SET
+ VERSION: 002
+ COPYRIGHT: TekChoice, LLC 2020 ©
+
+ Description:   1. Base code -Section to SET Main variables 
+                2. Custom code -Section to SET Micro-Apps variables
+
+ Programmed:    TekChoice LLC
+
+ Modified:      06.24.20 Original Source
+
+********************************************************************************]
+
+[ **********************************************************************
+             1. Base code -Section to SET Main variables 
+
+ *********************************************************************** ]
+
+[ *** Html Fields Properties *** ]
+ HtmlFieldLabel     =0
+ HtmlFieldValue     =1
+ HtmlFieldID        =2
+ HtmlFieldName      =3
+ HtmlFieldMaxLength =4
+ HtmlFieldSize      =5
+ HtmlFieldFunction  =6
+ HtmlFieldStyle     =7
+
+[ *** Html Vars *** ]
+ WebFormName         = "htmlrginputform"
+ WebDisplayAcctTitle = TRUE
+ WebMaxBtn           = 10
+ BACK                = "1"
+ CANCEL              = "2"
+ NEXT                = "3"
+ REFRESHFORM         = "4"
+ MbrServicesMax      = 99
+ MONEYFORMAT         = "$###,###,##9.99+"
+ DATEFORMAT          = "99/99/9999"
+ TIMEFORMAT          = "99:99"
+ RATEFORMAT          = "99.999%"
+ Q                   = CTRLCHR(34)
+ TRUE                = 1
+ FALSE               = 0
+ TekBkgColor1        = "#DCDCDC"
+ TekBkgColor2        = "#FFFFFF"
+ MyOption            = 0
+ HtmlTrackStartTime  = 1
+ HtmlTrackEndTime    = 2
+ RequesterLocator    = 3
+ InPersonRequestFlag = 4
+ HtmlPostResponse    = 5
+ HtmlAccountNumber   = 6
+ DocuSignAuthType    = 7
+ DocuSignPhoneList   = 8
+ HtmlLongName        = 9
+ HtmlAnchor          = 10
+ HtmlFocus           = 11
+ ConfirmationItemMax = 20
+ ConfirmationCounterMax = 99
+ HtmlVars(HtmlTrackStartTime,HtmlFieldLabel)="Start Time"
+ HtmlVars(HtmlTrackEndTime,HtmlFieldLabel)="End Time"
+ HtmlVars(RequesterLocator,HtmlFieldID)="RequesterLocator"
+ HtmlVars(InPersonRequestFlag,HtmlFieldID)="InPersonRequestFlag"
+ HtmlVars(HtmlPostResponse,HtmlFieldID)="HtmlPostResponse"
+ HtmlVars(HtmlAccountNumber,HtmlFieldID)="HtmlAccountNumber"
+ HtmlVars(DocuSignAuthType,HtmlFieldID)="DocuSignAuthType"
+ HtmlVars(HtmlLongName,HtmlFieldID)="HtmlLongName"
+ HtmlVars(HtmlAnchor,HtmlFieldID)="HtmlAnchor"
+ HtmlVars(HtmlFocus,HtmlFieldID)="HtmlFocus"
+
+[*** Current User ***]
+ CurrentUserName  =1
+ CurrentUserNum   =2
+ CurrentSYM       =3
+ CurrentConsole   =4
+ CurrentBranch    =5
+ CurrentAppName   =6
+ CurrentAppChannel=7
+ CurrentAppStep   =8
+ CurrentAppMax    =8
+ CurrentApp(CurrentUserName,0)  ="CurrentUserName"
+ CurrentApp(CurrentUserNum,0)   ="CurrentUserNum"
+ CurrentApp(CurrentSYM,0)       ="CurrentSYM"
+ CurrentApp(CurrentConsole,0)   ="CurrentConsole"
+ CurrentApp(CurrentBranch,0)    ="CurrentBranch"
+ CurrentApp(CurrentAppName,0)   ="CurrentAppName"
+ CurrentApp(CurrentAppChannel,0)="CurrentAppChannel"
+ CurrentApp(CurrentAppStep,0)   ="CurrentAppStep"
+
+[*** Text Fields ***]
+ HtmlDefaultFieldMaxLength ="30"
+ HtmlDefaultFieldSize      ="30"
+
+[*** CU Brand Colors ***]
+ TekCUProgressBarActive=0
+ TekCUProgressBarBkg   =1
+ TekCUProgressBar      =2
+ TekCUBarBkg           =3
+ TekCUBtnHover         =4
+ TekCUBtn              =5
+ TekColorWarning       =6
+ TekColorComment       =7
+ TekColorGo            =8
+ CUColorsMax           =8
+ CUColors(TekCUProgressBarActive,HtmlFieldLabel)="TekCUProgressBarActive"
+ CUColors(TekCUProgressBarBkg,HtmlFieldLabel)="TekCUProgressBarBkg"
+ CUColors(TekCUProgressBar,HtmlFieldLabel)="TekCUProgressBar"
+ CUColors(TekCUBarBkg,HtmlFieldLabel)="TekCUBarBkg"
+ CUColors(TekCUBtnHover,HtmlFieldLabel)="TekCUBtnHover"
+ CUColors(TekCUBtn,HtmlFieldLabel)="TekCUBtn"
+ CUColors(TekColorWarning,HtmlFieldLabel)="TekColorWarning"
+ CUColors(TekColorComment,HtmlFieldLabel)="TekColorComment"
+ CUColors(TekColorGo,HtmlFieldLabel)="TekColorGo"
+
+[ *** List Items *** ]
+ MaxListItem=99
+
+[ *** Name Record *** ]
+ ObjNameLocator     =0 
+ ObjNameSSN         =1 
+ ObjNameLongName    =2 
+ ObjNameLast        =3 
+ ObjNameFirst       =4 
+ ObjNameStreet      =5 
+ ObjNameExtraAddress=6 
+ ObjNameCity        =7
+ ObjNameState       =8 
+ ObjNameZipCode     =9 
+ ObjNameMobilePhone =10 
+ ObjNameHomePhone   =11
+ ObjNameWorkPhone   =12 
+ ObjNameEmail       =13 
+ ObjNameAltEmail    =14 
+ ObjNameDOB         =15
+ ObjNameLevel       =16 
+ ObjNameType        =17
+ ObjNameMiddle      =18
+ ObjNameEmployer    =19
+ NameListMaxFields=19
+ NameListMax=50
+
+ NameTypeOptions(0)="Primary"
+ NameTypeOptions(1)="Joint"
+ NameTypeOptions(2)="Mailing"
+ NameTypeOptions(3)="Alternate Mailing"
+ NameTypeOptions(4)="Beneficiary"
+ NameTypeOptions(5)="Custodian"
+ NameTypeOptions(6)="Trustee"
+ NameTypeOptions(7)="Responsible Individual"
+ NameTypeOptions(8)="Power of attorney"
+ NameTypeOptions(9)="Authorized signer"
+ NameTypeOptions(10)="Div payee"
+ NameTypeOptions(11)="Matur Payee"
+ NameTypeOptions(12)="Coverdell ESA"
+ NameTypeOptions(13)="Next of Kin"
+ NameTypeOptions(50)="Credit Union"
+ NameTypeOptions(51)="CU Joint"
+ NameTypeOptions(52)="CU Mailing"
+ NameTypeOptions(53)="CU Alternate"
+
+ SkipFormsForTesting=FALSE
+
+ CurrentApp(CurrentAppName,1)="004 Skip A Pay"
+
+[ **********************************************************************
+               2. Custom code -Section to SET Micro-Apps variables
+
+ *********************************************************************** ]
+
+ [ *** Html Fields -Must Begging at 15 *** ]
+ HtmlOriginalCreditScore=15
+ HtmlRecentCreditScore=16
+ HtmlNewAnnualIncome=17
+ HtmlLADate=18
+ HtmlLACreditScore=19
+ HtmlLAIncome=20
+ HtmlLADebtRatio1=21
+ HtmlLADebtRatio2=22
+ HtmlLADebtRatio3=23
+ HtmlLAProposedUER=24
+ HtmlLoanID=25
+ 
+ HtmlStreet=26
+ HtmlExtraAddress=27
+ HtmlCity=28
+ HtmlState=29
+ HtmlZipCode=30
+
+ HtmlFirst=31
+ HtmlLast=32
+ HtmlMiddle=33
+ HtmlMobilePhone=34
+ HtmlEmail=35
+ HtmlResquestStatus=36
+
+ HtmlNewLimit=37
+ HtmlLoanSelected=38
+ HtmlAccountNoteTxt1=39
+ HtmlAccountNoteTxt2=40
+ HtmlAccountNoteTxt3=41
+ HtmlAccountNoteTxt4=42
+ HtmlAccountNoteTxt5=43
+ HtmlGrossMonthlyPay=44
+ HtmlCurrentCreditLimit=45
+ HtmlNameLocator=46
+ HtmlNameLevel=47
+ HtmlVarsMax=47
+
+ HtmlVars(HtmlOriginalCreditScore,HtmlFieldID)="HtmlOriginalCreditScore"
+ HtmlVars(HtmlRecentCreditScore,HtmlFieldID)="HtmlRecentCreditScore"
+ HtmlVars(HtmlNewAnnualIncome,HtmlFieldID)="HtmlNewAnnualIncome"
+ HtmlVars(HtmlNewAnnualIncome,HtmlFieldFunction)="onblur='getMonthlyIncome(this);' "
+ HtmlVars(HtmlLADate,HtmlFieldID)="HtmlLADate"
+ HtmlVars(HtmlLACreditScore,HtmlFieldID)="HtmlLACreditScore"
+ HtmlVars(HtmlLAIncome,HtmlFieldID)="HtmlLAIncome" 
+ HtmlVars(HtmlLADebtRatio1,HtmlFieldID)="HtmlLADebtRatio1"
+ HtmlVars(HtmlLADebtRatio2,HtmlFieldID)="HtmlLADebtRatio2" 
+ HtmlVars(HtmlLADebtRatio3,HtmlFieldID)="HtmlLADebtRatio3"
+ HtmlVars(HtmlLAProposedUER,HtmlFieldID)="HtmlLAProposedUER"
+ HtmlVars(HtmlLoanID,HtmlFieldID)="HtmlLoanID"
+ HtmlVars(HtmlGrossMonthlyPay,HtmlFieldID)="HtmlGrossMonthlyPay"
+ HtmlVars(HtmlResquestStatus,HtmlFieldID)="HtmlResquestStatus"
+ HtmlVars(HtmlCurrentCreditLimit,HtmlFieldID)="HtmlCurrentCreditLimit"
+ HtmlVars(HtmlNameLocator,HtmlFieldValue)="HtmlNameLocator"
+ HtmlVars(HtmlNameLevel,HtmlFieldValue)="HtmlNameLevel"
+
+ HtmlVars(HtmlStreet,HtmlFieldID)="HtmlStreet"
+ HtmlVars(HtmlExtraAddress,HtmlFieldID)="HtmlExtraAddress"
+ HtmlVars(HtmlCity,HtmlFieldID)="HtmlCity"
+ HtmlVars(HtmlState,HtmlFieldID)="HtmlState"
+ HtmlVars(HtmlZipCode,HtmlFieldID)="HtmlZipCode"
+
+ HtmlVars(HtmlFirst,HtmlFieldID)="HtmlFirst"
+ HtmlVars(HtmlLast,HtmlFieldID)="HtmlLast"
+ HtmlVars(HtmlMiddle,HtmlFieldID)="HtmlMiddle"
+ HtmlVars(HtmlMobilePhone,HtmlFieldID)="HtmlMobilePhone"
+ HtmlVars(HtmlEmail,HtmlFieldID)="HtmlEmail"
+
+ HtmlVars(HtmlNewLimit,HtmlFieldID)="HtmlNewLimit"
+ HtmlVars(HtmlNewLimit,HtmlFieldFunction)="onblur='CurrencyFormat(this);' "
+ HtmlVars(HtmlLoanSelected,HtmlFieldID)="HtmlLoanSelected"
+ HtmlVars(HtmlAccountNoteTxt1,HtmlFieldID)="HtmlAccountNoteTxt1"
+ HtmlVars(HtmlAccountNoteTxt1,HtmlFieldSize)="40"
+ HtmlVars(HtmlAccountNoteTxt2,HtmlFieldID)="HtmlAccountNoteTxt2"
+ HtmlVars(HtmlAccountNoteTxt2,HtmlFieldSize)="40"
+ HtmlVars(HtmlAccountNoteTxt3,HtmlFieldID)="HtmlAccountNoteTxt3"
+ HtmlVars(HtmlAccountNoteTxt3,HtmlFieldSize)="40"
+ HtmlVars(HtmlAccountNoteTxt4,HtmlFieldID)="HtmlAccountNoteTxt4"
+ HtmlVars(HtmlAccountNoteTxt4,HtmlFieldSize)="40"
+ HtmlVars(HtmlAccountNoteTxt5,HtmlFieldID)="HtmlAccountNoteTxt5"
+ HtmlVars(HtmlAccountNoteTxt5,HtmlFieldSize)="40"
+
+ btnCustomCSS="style='width: 700px; text-align: left; padding: 15px' "
+
+[***Brand Colors***] [20210719 kds added section]
+ CUColors(TekCUProgressBarActive,HtmlFieldValue)="#FD1500"  [Red]
+ CUColors(TekCUProgressBarBkg,HtmlFieldValue)="#f1f1f1"     [Light-grey]
+ CUColors(TekCUProgressBar,HtmlFieldValue)="#1E2251"        [Dark Blue]
+ CUColors(TekCUBarBkg,HtmlFieldValue)="#1E2251"             [Dark Blue]
+ CUColors(TekCUBtnHover,HtmlFieldValue)="#1E2251"           [Dark Blue]
+ CUColors(TekCUBtn,HtmlFieldValue)="#1C75BC"                [Light Blue]
+ CUColors(TekColorWarning,HtmlFieldValue)="#e51400"         [Red]
+ CUColors(TekColorComment,HtmlFieldValue)="#146eb4"         [Blue]
+ CUColors(TekColorGo,HtmlFieldValue)="#fd7622"              [Light Blue]
