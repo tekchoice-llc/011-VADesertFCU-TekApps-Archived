@@ -9,7 +9,7 @@
 
  SPECFILENAME: TEKAPP011.CREDITINCREASE.SET
  VERSION: 002
- COPYRIGHT: TekChoice, LLC 2020 � 
+ COPYRIGHT: TekChoice, LLC 2020 ©
 
  Description:   1. Base code -Section to SET Main variables 
                 2. Custom code -Section to SET Micro-Apps variables
@@ -272,5 +272,3 @@
  CUColors(TekColorWarning,HtmlFieldValue)="#e51400"         [Red]
  CUColors(TekColorComment,HtmlFieldValue)="#146eb4"         [Blue]
  CUColors(TekColorGo,HtmlFieldValue)="#fd7622"              [Light Blue]
-
-
