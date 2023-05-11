@@ -1,0 +1,94 @@
+[*****************************************************************************
+ IMPORTANT NOTICE
+
+ By downloading, installing, or otherwise using any tek-apps, software, documentation, or 
+ other materials made available by TekChoice, LLC, through this repository, you acknowledge
+ that you have read, understand, and agree to be bound by the End User License Agreement (the "EULA")
+ included in these downloaded files as EULA.txt and made available at www.tekchoice.com/EULA.
+
+ SPECFILENAME: TEKAPP011.STOPPYMT.DEF
+ VERSION: 001
+ COPYRIGHT: TekChoice, LLC 2021 © 
+
+ Sections:      1. TekApp HTML Variable Definition
+                2. Base Variable Definition
+
+ Programmed:    TekChoice LLC
+
+ Modified:      05.15.21 Original Source
+
+
+********************************************************************************]
+
+
+[ **********************************************************************
+                    1. TekApp Variable Definition
+
+ *********************************************************************** ]
+
+[ *** Apps Variables ***]
+ StopPymtHistoryCounter=Number
+ StopHoldType=Number
+ StopExpDate=Number
+ StopACHFrequency=Number
+ StopAmount=Number
+ StopPayableTo=Number
+ StopFee=Number
+ StopShareIDFee=Number
+ StopShareID=Number
+ StopNote=Number
+ StopReason=Number
+ StopPymtType=Number
+ StopCheckNumber=Number
+ StopCheckNumberEnd=Number
+ StopACHDebitCredit=Number
+ DebitCreditOption=Character ARRAY(9)
+ DebitCreditOptions=Number
+ VerbalStopPymtLoc=Number
+
+ StopDraft=Character(1)
+ StopDraftVerbal=Character(1)
+ StopACH=Character(1)
+ StopACHVerbal=Character(1)
+ StopReasonOption=Character ARRAY(99)
+ StopReasonOptions=Number
+ ValidateShareHoldProcessed=Number
+ ErrorID=Number
+ SHAREID=Character
+ TransactionFee=Character
+ StopGLFee=Number
+ StopComment=Character
+ btnCustomCSS=Character
+ btnCustomSmall=Character
+ UpdateStopPymtHoldFlag=Number
+ VerbalDate=DATE
+ InPersonDate=DATE
+ SPACHRecurringStop=Number
+ PRINTHEADER=Number
+ TMPACHECC=Number
+ PRINTRECORD=Number
+ ConfirmLabelTxt=Character 
+ CreateStopPymtHoldTxt=Character 
+ TransferStopPymtFeeTxt=Character 
+ updateStopPymtHoldTxt=Character 
+ StopPymtFeeTxt=Character 
+
+[ *** Requester *** ]
+ RequesterLongName=NUMBER
+ RequesterStreet=NUMBER
+ RequesterExtraAddress=NUMBER
+ RequesterCity=NUMBER
+ RequesterState=NUMBER
+ RequesterZip=NUMBER
+ RequesterSSN=NUMBER
+ RequesterPhone=NUMBER
+ AccountType=NUMBER
+
+[*** Apps Security Access ***]
+ EpisysSG         = Character Array(99,2)
+ EpisysSGMax      = Number
+ CurrentUserLimit = Money
+ SGNumber         = Number
+ SGLimit          = Number
+
+ HtmlTestField=Number
