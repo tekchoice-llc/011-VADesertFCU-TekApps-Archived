@@ -1,0 +1,784 @@
+[*****************************************************************************
+ IMPORTANT NOTICE
+
+ By downloading, installing, or otherwise using any tek-apps, software, documentation, or 
+ other materials made available by TekChoice, LLC, through this repository, you acknowledge
+ that you have read, understand, and agree to be bound by the End User License Agreement (the "EULA")
+ included in these downloaded files as EULA.txt and made available at www.tekchoice.com/EULA.
+
+ SPECFILENAME: TEKAPP011.STOPPYMT
+ VERSION: 001
+ COPYRIGHT: TekChoice, LLC 2021 © 
+
+ Description:   Application allows staff to POST a transaction fee  
+                while providing an integral overview of the Account. 
+
+ Files:         1. PowerOn Specfiles
+                  a. TEKAPP011.STOPPYMT
+                  b. TEKAPP011.STOPPYMT.DEF
+                  c. TEKAPP011.STOPPYMT.SET
+                  d. TEKAPP011.STOPPYMT.PRO
+                  e. TEKAPP011.STOPPYMT.CU
+                  f. TEKAPP011.MAIN.HTM
+                  g. TEKAPP011.MAIN.DEFv2
+                  h. TEKAPP011.MAIN.PROv2
+                  i. TEKAPP011.MAIN.SETv2
+                  j. TEKAPP011.DOCUSIGN.DEF
+                  k. TEKAPP011.DOCUSIGN.PRO
+
+
+ Programmed:    TekChoice LLC
+
+ Modified:      05.15.21 Original Source
+
+
+********************************************************************************]
+
+SUBROUTINE DEMAND WINDOWS
+STATELESS
+TARGET=ACCOUNT
+
+DEFINE
+ #INCLUDE "RD.GETDATA.DEF"
+ #INCLUDE "TEKAPP011.MAIN.DEFV2"
+ #INCLUDE "TEKAPP011.STOPPYMT.DEF"
+ #INCLUDE "TEKAPP011.DOCUSIGN.DEF" 
+END[DEFINE]
+
+SETUP
+ #INCLUDE "TEKAPP011.MAIN.SETV2"
+ #INCLUDE "TEKAPP011.STOPPYMT.SET"
+ 
+ CALL setCrediUnionVars
+ CALL TekSetGlobalVariables
+ CALL TekSetGlobaldDocuSignVars [KDS]
+ TekWebCalendar=FALSE
+ StepName(1)="Payment Type"
+ StepName(2)="Check Information"
+ StepName(3)="Review"
+ StepName(4)="Confirmation"
+ NumOfSteps=4
+ CurrentApp(CurrentAppName,1)="TEKAPP011.STOPPYMT"
+ CurrentApp(CurrentAppChannel,1)="01 Episys Client"
+ CurrentApp(CurrentAppStep,1)="Initial App Call"
+ CALL TekProWebSetupApp
+ btnCustomCSS="style='width: 1000px; text-align: left; padding: 15px' "
+ btnCustomSmall="style='width: 200px; text-align: left; padding: 15px' "
+
+ WebPageTitle = "Stop Payment"
+ RGSTATUS      = "GetRequester"
+
+ WHILE RGSTATUS <> "CANCEL"
+  DO
+    WHILELIMIT=100000000
+
+    IF RGSTATUS="GetRequester" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetRequester
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT        THEN 
+        DO
+         IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="Y" THEN 
+           RGSTATUS="GetStopPymtHistory"
+         ELSE
+           RGSTATUS="GetStopPymtType"
+        END
+     END
+
+    IF RGSTATUS="GetStopPymtHistory" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetStopPymtHistoryCounter
+       IF StopPymtHistoryCounter>0 THEN
+        DO
+          CALL ClearHtmlVars
+          CALL GetStopPymtHistory [here]
+          IF WebSubmitBtn=REFRESHFORM THEN 
+           DO
+             CALL getRequesterData
+             CALL loadUpdateStopPymtData
+             RGSTATUS="getMbrSignature"
+           END
+          IF WebSubmitBtn=BACK        THEN RGSTATUS="GetRequester"
+          IF WebSubmitBtn=NEXT        THEN RGSTATUS="GetStopPymtType"
+          IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+        END
+       ELSE
+        RGSTATUS="GetStopPymtType"
+     END
+
+    IF RGSTATUS="GetStopPymtType" THEN
+     DO
+       CALL ClearHtmlVars
+       CALL getRequesterData
+       HtmlVars(VerbalStopPymtLoc,HtmlFieldValue)="1"
+       WebPageTitle = "Stop Payment"
+       StepName(1)="Payment Type"
+       StepName(2)="Transaction"
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetStopPymtType
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="GetRequester"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetStopPymtType"
+       IF WebSubmitBtn=NEXT THEN
+        DO 
+         IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="Y" THEN HtmlVars(StopExpDate,HtmlFieldValue)=FORMAT(DateFormat,InPersonDate)
+          ELSE HtmlVars(StopExpDate,HtmlFieldValue)=FORMAT(DateFormat,VerbalDate)
+
+         IF HtmlVars(StopPymtType,HtmlFieldValue)="1" THEN
+          DO
+           RGSTATUS="GetACHFrequency"
+           IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="Y" THEN HtmlVars(StopHoldType,HtmlFieldValue)=StopACH
+            ELSE HtmlVars(StopHoldType,HtmlFieldValue)=StopACHVerbal
+          END
+         ELSE
+          DO
+           RGSTATUS="GetStopDraftData"
+           IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="Y" THEN HtmlVars(StopHoldType,HtmlFieldValue)=StopDraft
+            ELSE HtmlVars(StopHoldType,HtmlFieldValue)=StopDraftVerbal
+          END
+        END
+     END
+
+    IF RGSTATUS="GetStopDraftData" THEN 
+     DO
+       WebPageTitle = "Stop Draft"
+       StepName(1)="Payment Type"
+       StepName(2)="Check Information"
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetStopDraftData
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="GetStopPymtType"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="GetStopDraftReview"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetStopDraftData"
+     END
+
+    IF RGSTATUS="GetStopDraftReview" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetStopDraftReview
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="GetStopDraftData"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetStopDraftReview"
+       IF WebSubmitBtn=NEXT        THEN
+        IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="N" THEN
+         RGSTATUS="SendDocusign" [RGSTATUS="getMbrSignature"]
+        ELSE
+         RGSTATUS="getConfirmation" 
+     END
+
+    IF RGSTATUS="GetACHFrequency" THEN
+     DO
+       WebPageTitle = "Stop ACH"
+       StepName(1)="Frequency"
+       StepName(2)="Transaction"
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetACHFrequency
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="GetStopPymtType"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="GetACHTransaction"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetACHFrequency"
+     END
+
+    IF RGSTATUS="GetACHTransaction" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetACHTransaction
+       IF WebSubmitBtn=BACK   THEN RGSTATUS="GetACHFrequency"
+       IF WebSubmitBtn=CANCEL THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=NEXT   THEN RGSTATUS="GetStopACHData"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetACHTransaction"
+     END
+
+    IF RGSTATUS="GetStopACHData" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL GetStopACHData
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="GetACHTransaction"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="GetStopACHData"
+       IF WebSubmitBtn=NEXT        THEN 
+        IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="N" THEN
+         RGSTATUS="SendDocusign" [RGSTATUS="getMbrSignature"]
+        ELSE
+         RGSTATUS="getConfirmation" 
+     END
+
+    IF RGSTATUS="SendDocusign" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CurrentStep=4
+       CALL getDocuAuthType
+       IF WebSubmitBtn=BACK        THEN RGSTATUS="getReview"
+       IF WebSubmitBtn=CANCEL      THEN RGSTATUS="CANCEL"
+       IF WebSubmitBtn=REFRESHFORM THEN RGSTATUS="sendDocusign"
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="CANCEL"
+     END
+
+    IF RGSTATUS="getMbrSignature" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL getMbrSignature
+       IF PDFSigned=TRUE  THEN 
+         RGSTATUS="getConfirmation"
+       ELSE
+         RGSTATUS="confirmMemberSignedForms"
+     END
+
+    IF RGSTATUS="confirmMemberSignedForms" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       CALL confirmMemberSignedForms
+       IF WebSubmitBtn=BACK        THEN 
+        DO
+          IF HtmlVars(VerbalStopPymtLoc,HtmlFieldValue)<>"1" THEN
+           RGSTATUS="GetStopPymtHistory" 
+          ELSE IF HtmlVars(StopPymtType,HtmlFieldValue)="1" THEN
+           RGSTATUS="GetStopACHData"
+          ELSE
+           RGSTATUS="GetStopDraftReview"
+        END
+       IF WebSubmitBtn=NEXT        THEN RGSTATUS="getConfirmation"
+     END
+
+    IF RGSTATUS="getConfirmation" THEN
+     DO
+       CurrentApp(CurrentAppStep,1)=RGSTATUS
+       [CALL TekProCreateTempFile]
+       CALL TekProAddTranLog
+       [CALL ProcessStopPymt] [KDS PREVENT ACTIONS]
+       CALL DisplayConfirmation
+       RGSTATUS="CANCEL"
+     END
+  END[WHILE]
+END[SETUP]
+
+PRINT TITLE=WebPageTitle
+ SUPPRESSNEWLINE
+END[PRINT]
+
+PROCEDURE GetStopPymtType
+ CurrentStep=1
+ CALL TekProWebHeader
+ CALL CustomJS
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<input type='hidden' name='StopPymtType' id='StopPymtType' value='1' >")
+ HTMLVIEWLINE("<div style='padding:20px 40px' >")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopPymtType"+Q+","+Q+"1"+Q+");return false;' >")
+ HTMLVIEWLINE("1. Stop ACH</a><br/><br/>")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopPymtType"+Q+","+Q+"2"+Q+");return false;' >")
+ HTMLVIEWLINE("2. Stop Draft</a><br/><br/>")
+ HTMLVIEWLINE("</div>") 
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[GetStopPymtType]
+
+
+PROCEDURE GetACHFrequency
+ CurrentStep=1
+ CALL TekProWebHeader
+ CALL CustomJS
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<input type='hidden' name='StopACHFrequency' id='StopACHFrequency' value='1' >")
+ HTMLVIEWLINE("<div style='padding:20px 40px' >")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopACHFrequency"+Q+","+Q+"1"+Q+");return false;' >")
+ HTMLVIEWLINE("1. Indefinitely; stop all future payments from this Originator indefinitely</a><br/><br/>")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopACHFrequency"+Q+","+Q+"2"+Q+");return false;' >")
+ HTMLVIEWLINE("2. One-time only; stop the next payment only</a><br/><br/>")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopACHFrequency"+Q+","+Q+"3"+Q+");return false;' >")
+ HTMLVIEWLINE("3. Indefinitely; stop all future debits and credits from this originator</a><br/><br/>")
+[
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+ HTMLVIEWLINE(btnCustomCSS)
+ HTMLVIEWLINE("onclick='UserSelectionJS("+Q+"StopACHFrequency"+Q+","+Q+"4"+Q+");return false;' >")
+ HTMLVIEWLINE("4. Stop a specific recurring amount</a><br/><br/>")
+]
+ HTMLVIEWLINE("</div>") 
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[GetACHFrequency]
+
+PROCEDURE GetACHTransaction
+ CurrentStep=2
+ CALL TekProWebHeader
+ CALL CustomJS
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<div class='blockbar bkg-color3' style='text-align:left'>Select transaction")
+ HTMLVIEWLINE(" or click <a href='#' onclick="+Q+"HideShowDiv('DivOption1');return false;"+Q+" >here</a>")
+ HTMLVIEWLINE(" to enter the Payee (if not listed)</div>")
+ HTMLVIEWLINE("<div style='padding:20px 40px' >")
+ HTMLVIEWLINE("<div id='DivOption1' style='display: none' >")
+ HTMLVIEWLINE("<table id='tabledata' width='90%' cellpadding='0' cellspacing='0' >")
+ HTMLVIEWLINE("<tr><td colspan='3'>")
+ IF HtmlVars(StopACHFrequency,HtmlFieldValue)="2" OR HtmlVars(StopACHFrequency,HtmlFieldValue)="4" THEN 
+   HTMLVIEWLINE("Enter name of the Company & Amount and click Submit")
+ ELSE
+   HTMLVIEWLINE("Enter name of the Company and click Submit")
+ HTMLVIEWLINE("</td></tr>")
+ HTMLVIEWLINE("<tr>")
+ HTMLVIEWLINE("<td style='padding: 10px'>")
+ HtmlTxtFieldName=StopPayableTo
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td>")
+ HTMLVIEWLINE("<td style='padding: 10px'>")
+ HtmlFieldDisabled=FALSE
+ IF HtmlVars(StopACHFrequency,HtmlFieldValue)<>"2" AND HtmlVars(StopACHFrequency,HtmlFieldValue)<>"4" THEN 
+  DO
+    HtmlVars(StopAmount,HtmlFieldValue)="0.00"
+    HtmlFieldDisabled=TRUE
+  END
+ HtmlTxtFieldName=StopAmount
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td>")
+ HTMLVIEWLINE("<td><a href='#' class='btn txt-large' onclick='SubmitForm("+NEXT+");return false;' >Submit</a></td>")
+ HTMLVIEWLINE("</tr>")
+ HTMLVIEWLINE("</table>")
+ HTMLVIEWLINE("</div>")
+ HTMLVIEWLINE("<table id='tabledata' width='90%' cellpadding='0' cellspacing='0' >")
+ PRINTHEADER=TRUE
+ FOR EACH SHARE 
+  DO
+   SHAREID=SHARE:ID
+   FOR EACH SHARE TRANSACTION WITH ((SHARE TRANSACTION:ACTIONCODE="D" AND                                      
+                                     SHARE TRANSACTION:SOURCECODE="E") OR
+                                    (SHARE TRANSACTION:ACTIONCODE="C" AND
+                                     (SHARE TRANSACTION:COMMENT="%% ACH ECC CCD" OR
+                                      SHARE TRANSACTION:COMMENT="%% ACH ECC PPD" OR
+                                      SHARE TRANSACTION:COMMENT="%% ACH ECC TEL" OR
+                                      SHARE TRANSACTION:COMMENT="%% ACH ECC WEB" )))
+     DO
+       IF SHARE TRANSACTION:ACTIONCODE="C" THEN TMPACHECC=TRUE
+        ELSE
+         DO
+          PRINTRECORD=TRUE
+[ **** TESTING *****]
+[TMPACHECC=TRUE]
+          IF TMPACHECC=FALSE THEN PRINTRECORD=FALSE
+          IF PRINTRECORD=TRUE THEN  
+           DO
+             IF PRINTHEADER=TRUE THEN CALL PrintTransactionHeader
+             IF ZebraColor="#DCDCDC" THEN ZebraColor="#FFFFFF"
+              ELSE ZebraColor="#DCDCDC"
+             HTMLVIEWLINE("<tr style='background-color: " +ZebraColor+ "'; >")
+             HTMLVIEWLINE("<td class='WhiteBorderTop tblRowPadding'>" +SHAREID + "</td>")
+             HTMLVIEWLINE("<td class='WhiteBorderTop tblRowPadding'>"+ FORMAT("99/99/99",SHARE TRANSACTION:POSTDATE) + "</td>")
+             HTMLVIEWLINE("<td class='WhiteBorderTop tblRowPadding' style='text-align:right; padding-right: 15px;'>" +FORMAT(MoneyFormat,SHARE TRANSACTION:TRANAMOUNT)+ "</td>")
+             HTMLVIEWLINE("<td class='WhiteBorderTop tblRowPadding' style='text-align:left; padding-right: 15px;'>")
+             HTMLVIEWLINE(SHARE TRANSACTION:DESCRIPTION+ "</td>")
+             HTMLVIEWLINE("<td class='WhiteBorderTop tblRowPadding' style='width:180px; height: 50px'>")
+             TEMPTEXT=SHARE TRANSACTION:DESCRIPTION
+             TEMPTEXT1=FORMAT(MoneyFormat,SHARE TRANSACTION:TRANAMOUNT)
+             CALL ESCAPESINGLEQUOTE
+             HTMLVIEWLINE("<a href='#' class='btn txt-large' ")
+             HTMLVIEWLINE("onclick="+Q+"UserTranSelectionJS('StopPayableTo','StopAmount','"+TEMPTEXT+"','"+TEMPTEXT1+"');return false;"+Q+" >")
+             HTMLVIEWLINE("Select</a>")
+             HTMLVIEWLINE("</td></tr>")
+           END
+          TMPACHECC=FALSE
+         END
+    END[FOR EACH SHARE TRANSACTION]
+    UNTIL SHARE TRANSACTION:POSTDATE < SYSTEMDATE-90
+  END[FOR EACH SHARE]
+ IF PRINTHEADER=TRUE THEN 
+  DO
+    HTMLVIEWLINE("<script>HideShowDiv('DivOption1');</script>")
+  END
+ HTMLVIEWLINE("</table>")
+ HTMLVIEWLINE("</div>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[GetACHTransaction]
+
+PROCEDURE GetStopACHData
+ CurrentStep=3
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopShareID
+ CALL TekProCreateSelField
+ CALL GetSelectShareOptions
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopPayableTo
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopShareIDFee
+ CALL TekProCreateSelField
+ CALL GetSelectShareFeeOptions
+ CALL GetSelectNoFeeOption
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopReason
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("<tr><td>")
+ IF HtmlVars(StopACHDebitCredit,HtmlFieldValue)="" THEN HtmlVars(StopACHDebitCredit,HtmlFieldValue)="Debit"
+ HtmlTxtFieldName=StopACHDebitCredit
+ CALL TekProCreateSelField
+ CALL TekProCreateDebitCreditOption
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ IF HtmlVars(StopACHFrequency,HtmlFieldValue)<>"2" AND HtmlVars(StopACHFrequency,HtmlFieldValue)<>"4" THEN 
+  DO
+    HtmlVars(StopAmount,HtmlFieldValue)="0.00"
+    HtmlFieldDisabled=TRUE
+  END
+ IF HtmlVars(StopAmount,HtmlFieldValue)="" THEN HtmlVars(StopAmount,HtmlFieldValue)="0.00"
+ HtmlTxtFieldName=StopAmount
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ WebBtn(3)="NEXT~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+ IF WebSubmitBtn=NEXT THEN
+  DO
+    HtmlTxtFieldName=StopShareID
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopShareIDFee
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopPayableTo
+    CALL TekProValRequiredField
+    TEMPTEXT=HtmlVars(StopAmount,HtmlFieldValue)
+    CALL TekProGetOnlyNumbers
+    TEMPMONEY=MONEY(VALUE(TEMPTEXT))
+    CALL TekProFormatMoney
+    HtmlVars(StopAmount,HtmlFieldValue)=TEMPTEXT  
+    HtmlTxtFieldName=StopAmount
+    CALL TekProValRequiredField
+    IF WebSubmitBtn=NEXT THEN
+     DO
+      IF HtmlVars(StopShareIDFee,HtmlFieldValue)="Fee Waived" THEN HtmlVars(StopFee,HtmlFieldValue)="$0.00"
+       ELSE HtmlVars(StopFee,HtmlFieldValue)=TransactionFee
+     END
+  END
+END[GetStopACHData]
+
+PROCEDURE GetMbrSignature
+ CALL TekProCreateTempFile
+ 
+ INITSUBROUTINE(ERRORTEXT)
+ @ENVARGCHAR2=SYSHOSTNAME+".jha-sys.com" [fqdn of PF/Symitar App server]
+ @ENVARGCHAR3="42"+FORMAT("999",SYSSYMDIRECTORY) [PowerFrame port, i.e. 42XXX]
+ @ENVARGCHAR4=PDFForm [form/workflow name]
+
+ [Inbounding variables to send to form]
+ EXECUTE("RD.POAS.DOC.CALL.SUBR",ERRORTEXT)
+
+ PDFSigned=FALSE
+ IF ERRORTEXT<>"" THEN
+  DO
+   POPUPMESSAGE(2,"Error calling PowerFrame subroutine - "+ERRORTEXT)
+   terminate
+  END
+ ELSE
+  PDFSigned=TRUE 
+END[GetMbrSignature]
+
+PROCEDURE confirmMemberSignedForms
+ CurrentStep=4
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+ HTMLVIEWLINE("<tr><td style='padding:20px' >")
+ HTMLVIEWLINE("<b class='txt-xlarge' >Did the member sign the form(s)?</b><br/><br/>")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' onclick='SubmitForm("+NEXT+");return false;' >YES</a>")
+ HTMLVIEWLINE("<a href='#' class='btn txt-large' onclick='SubmitForm("+BACK+");return false;' >NO</a>")
+ HTMLVIEWLINE("</td></tr>")
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[confirmMemberSignedForms]
+
+PROCEDURE GetStopPymtHistory
+ HtmlVars(VerbalStopPymtLoc,HtmlFieldValue)="1"
+ CALL TekProWebHeader
+ CALL CustomJS
+ CALL TekProWebWSteps
+
+ HTMLVIEWLINE("<input type='hidden' name='VerbalStopPymtLoc' id='VerbalStopPymtLoc' value='1' >")
+ HTMLVIEWLINE("<div style='padding:20px 40px 40px 40px' >")
+ HTMLVIEWLINE("<div class='blockbar bkg-color3'>")
+ HTMLVIEWLINE("Select <b>verbal ACH\DRAFT Stop</b> to capture member signature or click <b>NEXT</b> for NEW Stop Payment</div>")
+ HTMLVIEWLINE("</div>")
+ HTMLVIEWLINE("<table width='95%' cellspacing='0' cellpadding='0' border='0' >")
+ FOR EACH SHARE WITH SHARE:CLOSEDATE='--/--/--'
+  DO
+    FOR EACH SHARE HOLD WITH (SHARE HOLD:TYPE=VALUE(StopACHVerbal) OR SHARE HOLD:TYPE=VALUE(StopDraftVerbal)) AND SHARE HOLD:EXPIRATIONDATE>SYSTEMDATE
+      DO
+        HTMLVIEWLINE("<tr><td><a href='#' class='btn bkg-color1 bkg-hover-color2 txt-large' ")
+        HTMLVIEWLINE(btnCustomCSS)
+        IF HtmlVars(InPersonRequestFlag,HtmlFieldValue)="N" THEN
+          HTMLVIEWLINE("onclick="+Q+"alert('Form must be sign in person')"+Q+" >")
+         ELSE
+          HTMLVIEWLINE("onclick='GetVerbalStopPymtLocJS("+Q+FORMAT("9999999999",SHARE HOLD:LOCATOR)+Q+");return false;' >")
+        IF SHARE HOLD:TYPE=VALUE(StopACHVerbal) THEN
+          HTMLVIEWLINE("ACH Stop: ")
+        ELSE
+          HTMLVIEWLINE("DRAFT Stop: Check #" + SHARE HOLD:REFERENCE1 + " ")
+        HTMLVIEWLINE(SHARE HOLD:PAYEENAME+ " Exp Date " +FORMAT(DATEFORMAT,SHARE HOLD:EXPIRATIONDATE)+ "</a></td></tr>")
+      END
+  END
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ WebBtn(3)="NEXT~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[GetStopPymtHistory]
+
+PROCEDURE GetStopDraftData
+ CurrentStep=2
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopShareID
+ CALL TekProCreateSelField
+ CALL GetSelectShareOptions
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopCheckNumber
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopShareIDFee
+ CALL TekProCreateSelField
+ CALL GetSelectShareFeeOptions
+ CALL GetSelectNoFeeOption
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopCheckNumberEnd
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopReason
+ CALL TekProCreateSelField
+ CALL TekProCreateSelectedOption
+ CALL TekProCreateStopReasonOption
+ HTMLVIEWLINE("</select>")
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopAmount
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=StopPayableTo
+ CALL TekProCreateTxtField
+ HTMLVIEWLINE("</td><td>")
+ HTMLVIEWLINE("</td></tr>")
+
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CLOSE~2"
+ WebBtn(3)="NEXT~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+ IF STARTTIME="" THEN STARTTIME=HtmlVars(1,HtmlFieldValue)
+ IF WebSubmitBtn=NEXT THEN
+  DO
+    TEMPTEXT=HtmlVars(StopCheckNumber,HtmlFieldValue)
+    CALL TekProGetOnlyNumbers
+    HtmlVars(StopCheckNumber,HtmlFieldValue)=TEMPTEXT
+    TEMPTEXT=HtmlVars(StopCheckNumberEnd,HtmlFieldValue)
+    CALL TekProGetOnlyNumbers
+    HtmlVars(StopCheckNumberEnd,HtmlFieldValue)=TEMPTEXT
+    TEMPTEXT=HtmlVars(StopAmount,HtmlFieldValue)
+    CALL TekProGetOnlyNumbers
+    TEMPMONEY=MONEY(VALUE(TEMPTEXT))
+    CALL TekProFormatMoney
+    HtmlVars(StopAmount,HtmlFieldValue)=TEMPTEXT
+    HtmlTxtFieldName=StopShareID
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopShareIDFee
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopReason
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopCheckNumber
+    CALL TekProValRequiredField
+    HtmlTxtFieldName=StopAmount
+    CALL TekProValRequiredField
+    IF HtmlVars(StopCheckNumber,HtmlFieldValue)<>"" THEN
+     DO
+      TEMPTEXT=HtmlVars(StopCheckNumber,HtmlFieldValue)
+      TEMPNUM=10
+      CALL TekProAddLeadingZeros
+      HtmlVars(StopCheckNumber,HtmlFieldValue)=TEMPTEXT
+     END
+    IF HtmlVars(StopCheckNumberEnd,HtmlFieldValue)<>"" THEN
+     DO
+      TEMPTEXT=HtmlVars(StopCheckNumberEnd,HtmlFieldValue)
+      TEMPNUM=10
+      CALL TekProAddLeadingZeros
+      HtmlVars(StopCheckNumberEnd,HtmlFieldValue)=TEMPTEXT
+     END  
+    IF VALUE(HtmlVars(StopCheckNumber,HtmlFieldValue))>=VALUE(HtmlVars(StopCheckNumberEnd,HtmlFieldValue)) AND
+       HtmlVars(StopCheckNumberEnd,HtmlFieldValue)<>"" THEN
+     DO
+      POPUPMESSAGE(0,HtmlVars(StopCheckNumberEnd,HtmlFieldLabel)+" must be greater than "+HtmlVars(StopCheckNumber,HtmlFieldLabel))
+      WebSubmitBtn=REFRESHFORM 
+     END 
+    IF WebSubmitBtn=NEXT THEN CALL TekProValDraft
+    IF WebSubmitBtn=NEXT THEN
+     DO
+      IF HtmlVars(StopShareIDFee,HtmlFieldValue)="Fee Waived" THEN HtmlVars(StopFee,HtmlFieldValue)="$0.00"
+       ELSE HtmlVars(StopFee,HtmlFieldValue)=TransactionFee
+     END
+  END
+END[GetStopDraftData]
+
+PROCEDURE GetStopDraftReview
+ CurrentStep=3
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ HTMLVIEWLINE("<table width='100%' cellspacing='0' cellpadding='0' border='0' >")
+ HTMLVIEWLINE("<tr><td>")
+ HtmlTxtFieldName=RequesterLongName
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("<br/>")
+ TEMPTEXT1=SEGMENT(HtmlVars(StopShareID,HtmlFieldValue),2,LENGTH(HtmlVars(StopShareID,HtmlFieldValue)))
+ CALL TekProGetShareDescription
+ HTMLVIEWLINE("<b>"+HtmlVars(StopShareID,HtmlFieldLabel)+"</b><br/>")
+ HTMLVIEWLINE(TEMPTEXT1+" " +TEMPTEXT2)
+ HTMLVIEWLINE("<br/><br/>")
+ HTMLVIEWLINE("<b>"+HtmlVars(StopShareIDFee,HtmlFieldLabel)+"</b><br/>")
+ IF HtmlVars(StopShareIDFee,HtmlFieldValue)="Fee Waived" THEN 
+  DO
+   HTMLVIEWLINE(HtmlVars(StopShareIDFee,HtmlFieldValue))
+  END
+ ELSE
+  DO
+   TEMPTEXT1=SEGMENT(HtmlVars(StopShareIDFee,HtmlFieldValue),2,LENGTH(HtmlVars(StopShareIDFee,HtmlFieldValue)))
+   CALL TekProGetShareDescription
+   HTMLVIEWLINE(TEMPTEXT1+" " +TEMPTEXT2)
+  END
+ HTMLVIEWLINE("<br/><br/>")
+ HtmlTxtFieldName=StopReason
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("</td><td>")
+ HtmlTxtFieldName=StopCheckNumber
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("<br/>")
+ HtmlTxtFieldName=StopCheckNumberEnd
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("<br/>")
+ HtmlTxtFieldName=StopAmount
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("<br/>")
+ HtmlTxtFieldName=StopPayableTo
+ CALL TekProCreateLabelField
+ HTMLVIEWLINE("</td></tr>")
+ HTMLVIEWLINE("</table>")
+ WebBtn(1)="BACK~1"
+ WebBtn(2)="CANCEL~2"
+ WebBtn(3)="NEXT~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+ ENDTIME=HtmlVars(2,HtmlFieldValue)
+END[GetStopDraftReview]
+
+PROCEDURE DisplayConfirmation
+ CurrentStep=4
+ CALL TekProWebHeader
+ CALL TekProWebWSteps
+ CALL TekProPrintConfirmation [CALL TekProDisplayHtmlVars]
+ WebBtn(1)="END~3"
+ CALL TekProWebDisplayBtn
+ CALL TekProWebBodyEnd
+ CALL TekProWebAcctOverview
+ CALL TekProWebHeaderEnd 
+ CALL TekProWebLoadFields
+END[DisplayConfirmation]
+
+PROCEDURE CustomJS
+ HTMLVIEWLINE("<script>")
+ HTMLVIEWLINE("function GetVerbalStopPymtLocJS(UserSelection){")
+ HTMLVIEWLINE("  var x = document.getElementById('VerbalStopPymtLoc');")
+ HTMLVIEWLINE("  x.value = UserSelection;")
+ HTMLVIEWLINE("  SubmitForm("+REFRESHFORM+");")
+ HTMLVIEWLINE("}")
+
+ HTMLVIEWLINE("function UserSelectionJS(el,UserSelection){")
+ HTMLVIEWLINE("  var x = document.getElementById(el);")
+ HTMLVIEWLINE("  x.value = UserSelection;")
+ HTMLVIEWLINE("  SubmitForm("+NEXT+");")
+ HTMLVIEWLINE("}")
+
+ HTMLVIEWLINE("function UserTranSelectionJS(el,el2,UserSelection,UserSelection2){")
+ HTMLVIEWLINE("  var x = document.getElementById(el);")
+ HTMLVIEWLINE("  x.value = UserSelection;")
+ HTMLVIEWLINE("  var y = document.getElementById(el2);")
+ HTMLVIEWLINE("  y.value = UserSelection2;")
+ HTMLVIEWLINE("  SubmitForm("+NEXT+");")
+ HTMLVIEWLINE("}")
+
+ HTMLVIEWLINE("function HideShowDiv(TheDiv){")
+ HTMLVIEWLINE("  var x = document.getElementById(TheDiv);")
+ HTMLVIEWLINE("  if (x.style.display == 'none'){")
+ HTMLVIEWLINE("     x.style.display = 'block';")
+ HTMLVIEWLINE("  }else{")
+ HTMLVIEWLINE("     x.style.display = 'none';")
+ HTMLVIEWLINE("  }")
+ HTMLVIEWLINE("}")
+
+ HTMLVIEWLINE("</script>")
+END[CustomJS]
+
+#INCLUDE "TEKAPP011.MAIN.PROV2"
+#INCLUDE "TEKAPP011.STOPPYMT.CU"
+#INCLUDE "TEKAPP011.STOPPYMT.PRO"
+#INCLUDE "TEKAPP011.MAIN.HTM"
+#INCLUDE "TEKAPP011.DOCUSIGN.PRO"
