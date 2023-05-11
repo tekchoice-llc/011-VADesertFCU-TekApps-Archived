@@ -1,0 +1,116 @@
+[*****************************************************************************
+
+ IMPORTANT NOTICE
+
+ By downloading, installing, or otherwise using any micro-apps, software, documentation, or 
+ other materials made available by TekChoice, LLC, through this repository, you acknowledge
+ that you have read, understand, and agree to be bound by the End User License Agreement (the "EULA")
+ included in these downloaded files as EULA.txt and made available at www.tekchoice.com/EULA.
+
+ SPECFILENAME: TEKAPP011.STOPPYMT.SET
+ VERSION: 001
+ COPYRIGHT: TekChoice, LLC 2021 © 
+
+ Description:   
+
+ Programmed:    TekChoice LLC
+
+ Modified:      05.15.21 Original Source
+
+
+********************************************************************************]
+
+
+[ **********************************************************************
+               1. Custom code -Section to SET Micro-Apps variables
+
+ *********************************************************************** ]
+
+ [ *** Html Fields -Must Begging at 15 *** ]
+ StopHoldType=15
+ StopExpDate=16
+ StopACHFrequency=17
+ StopAmount=18
+ StopPayableTo=19
+ StopFee=20
+ StopShareID=21
+ VerbalStopPymtLoc=22
+ StopNote=23
+ StopShareIDFee=24
+ StopReason=25
+ StopPymtType=26
+ StopCheckNumber=27
+ StopCheckNumberEnd=28
+ StopACHDebitCredit=29
+ RequesterLongName=30
+ RequesterStreet=31
+ RequesterExtraAddress=32
+ RequesterCity=33
+ RequesterState=34
+ RequesterZip=35
+ RequesterSSN=36
+ RequesterPhone=37
+ AccountType=38
+ HtmlDocuSignEmail=39
+ HtmlDocuSignPhoneList=40
+ HtmlDocuSignAuthType=41
+ HtmlTestField=42
+ HtmlVarsMax=42
+
+ HtmlVars(HtmlTestField,HtmlFieldID)="HtmlTestField"
+
+ HtmlVars(RequesterLocator,HtmlFieldID)="RequesterLocator"
+ HtmlVars(RequesterLongName,HtmlFieldID)="RequesterLongName"
+ HtmlVars(RequesterStreet,HtmlFieldID)="RequesterStreet"
+ HtmlVars(RequesterExtraAddress,HtmlFieldID)="RequesterExtraAddress"
+ HtmlVars(RequesterCity,HtmlFieldID)="RequesterCity"
+ HtmlVars(RequesterState,HtmlFieldID)="RequesterState"
+ HtmlVars(RequesterZip,HtmlFieldID)="RequesterZip"
+ HtmlVars(RequesterSSN,HtmlFieldID)="RequesterSSN"
+ HtmlVars(RequesterPhone,HtmlFieldID)="RequesterPhone"
+ HtmlVars(AccountType,HtmlFieldID)="AccountType"
+
+ HtmlVars(InPersonRequestFlag,HtmlFieldID)="InPersonRequestFlag"
+ HtmlVars(StopACHDebitCredit,HtmlFieldID)="StopACHDebitCredit"
+ HtmlVars(StopHoldType,HtmlFieldID)="StopHoldType"
+ HtmlVars(StopExpDate,HtmlFieldID)="StopExpDate"
+ HtmlVars(StopACHFrequency,HtmlFieldID)="StopACHFrequency"
+ HtmlVars(StopAmount,HtmlFieldID)="StopAmount"
+ HtmlVars(StopAmount,HtmlFieldMaxLength)="15"
+ HtmlVars(StopAmount,HtmlFieldFunction)="onKeyUp='NumbersPeriod(this);' onblur='CurrencyFormat(this);' "
+ HtmlVars(StopPayableTo,HtmlFieldID)="StopPayableTo"
+ HtmlVars(StopPayableTo,HtmlFieldFunction)="onKeyUp='AlphaNum(this);' "
+ HtmlVars(StopPayableTo,HtmlFieldMaxLength)="16"
+ HtmlVars(StopPayableTo,HtmlFieldValue)="0.00"
+ HtmlVars(StopFee,HtmlFieldID)="StopFee"
+ HtmlVars(StopShareID,HtmlFieldID)="StopShareID"
+ HtmlVars(VerbalStopPymtLoc,HtmlFieldID)="VerbalStopPymtLoc"
+ HtmlVars(StopNote,HtmlFieldID)="StopNote"
+ HtmlVars(StopShareIDFee,HtmlFieldID)="StopShareIDFee"
+ HtmlVars(StopReason,HtmlFieldID)="StopReason"
+ HtmlVars(StopPymtType,HtmlFieldID)="StopPymtType"
+ HtmlVars(StopCheckNumber,HtmlFieldID)="StopCheckNumber"
+ HtmlVars(StopCheckNumber,HtmlFieldMaxLength)="10"
+ HtmlVars(StopCheckNumber,HtmlFieldFunction)="onKeyUp='OnlyNumbers(this);'"
+ HtmlVars(StopCheckNumberEnd,HtmlFieldID)="StopCheckNumberEnd"
+ HtmlVars(StopCheckNumberEnd,HtmlFieldFunction)="onKeyUp='OnlyNumbers(this);'"
+ HtmlVars(StopCheckNumberEnd,HtmlFieldMaxLength)="10"
+
+
+[ *** Stop Reasons *** ]
+ StopReasonOption(1)="00 Unknown/None Provided"
+ StopReasonOption(2)="01 Lost"
+ StopReasonOption(3)="02 Stolen" 
+ StopReasonOption(4)="03 Destroyed"
+ StopReasonOption(5)="04 Not Endorsed"
+ StopReasonOption(6)="05 Certified" 
+ StopReasonOption(7)="06 Disputed"
+ StopReasonOption(8)="07 Return Merchandise"
+ StopReasonOption(9)="08 Stopped/Canceled Service" 
+ StopReasonOption(10)="99 Other" 
+ StopReasonOptions=10
+
+[ *** ACH Debit Credit Options *** ]
+ DebitCreditOption(1)="Debit"
+ DebitCreditOption(2)="Credit"
+ DebitCreditOptions=2
